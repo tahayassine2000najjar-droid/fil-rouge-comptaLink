@@ -7,7 +7,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { notify } from '../utils/notification.js';
 import { sendMail } from '../utils/mailer.js';
 import { buildQuotePdf } from '../utils/pdf.js';
-// import { env } from '../config/env.js';
+ import { env } from '../config/env.js';
 
 const createSchema = z.object({
   cabinet: z.string().min(1),
