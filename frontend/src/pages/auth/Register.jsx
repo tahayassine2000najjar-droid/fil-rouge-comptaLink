@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, Briefcase, ArrowRight, UserPlus, AlertCircle } from 'lucide-react';
-import { authApi } from '../lib/api';
+import { authApi } from '../../lib/api';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -37,7 +37,7 @@ export default function Register() {
       if (role === 'entreprise') {
         payload.companyName = formData.companyName;
       } else {
-        payload.firmName = formData.companyName; // reusing companyName state for firmName
+        payload.firmName = formData.companyName; 
       }
       
       const response = await authApi.register(payload);
@@ -72,7 +72,7 @@ export default function Register() {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="bg-white/80 backdrop-blur-xl py-8 px-4 shadow-2xl sm:rounded-3xl sm:px-10 border border-white">
           
-          {/* Role selector */}
+         
           <div className="flex p-1 space-x-1 bg-gray-100 rounded-xl mb-8">
             <button
               onClick={() => setRole('entreprise')}
@@ -117,7 +117,7 @@ export default function Register() {
                   type="text"
                   required
                   className="input-field pl-11"
-                  placeholder="John Doe"
+                  placeholder="Taha Yassine"
                   value={formData.fullName}
                   onChange={handleChange}
                 />
@@ -137,7 +137,7 @@ export default function Register() {
                   type="text"
                   required
                   className="input-field pl-11"
-                  placeholder={role === 'entreprise' ? 'Acme Corp' : 'Accounting Pros'}
+                  placeholder={role === 'entreprise' ? 'Tech Ultra' : 'Accounting Pros' }
                   value={formData.companyName}
                   onChange={handleChange}
                 />
@@ -155,7 +155,7 @@ export default function Register() {
                   type="email"
                   required
                   className="input-field pl-11"
-                  placeholder="you@example.com"
+                  placeholder={role === 'entreprise' ? 'Tech-Ultra@example.com' : 'Accounting-Pros@example.com'}
                   value={formData.email}
                   onChange={handleChange}
                 />

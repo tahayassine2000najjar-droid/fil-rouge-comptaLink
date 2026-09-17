@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, LogIn, ArrowRight, AlertCircle } from 'lucide-react';
-import { authApi } from '../lib/api';
+import { authApi } from '../../lib/api';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -19,7 +19,7 @@ export default function Login() {
       localStorage.setItem('accessToken', response.accessToken);
       localStorage.setItem('refreshToken', response.refreshToken);
       localStorage.setItem('user', JSON.stringify(response.user));
-      // Rediriger vers le tableau de bord
+     
       navigate('/dashboard');
     } catch (err) {
       setError(err.message);
@@ -68,7 +68,7 @@ export default function Login() {
                   type="email"
                   required
                   className="input-field pl-11"
-                  placeholder="you@example.com"
+                  placeholder="Tech-Ultra@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
