@@ -11,7 +11,7 @@ import { errorHandler, notFound } from './middleware/error.js';
 const app = express();
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
-app.use(cors({ origin: [env.appUrl, 'http://localhost:3000', 'http://localhost:5173'], credentials: true }));
+app.use(cors({ origin: [env.appUrl, 'http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'], credentials: true }));
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan(env.nodeEnv === 'production' ? 'combined' : 'dev'));
