@@ -1,9 +1,14 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Mail, Lock, User, Briefcase, ArrowRight, UserPlus } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Mail, Lock, User, Briefcase, ArrowRight, UserPlus, AlertCircle } from 'lucide-react';
+import { authApi } from '../lib/api';
 
 export default function Register() {
+  const navigate = useNavigate();
   const [role, setRole] = useState('entreprise');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [successMsg, setSuccessMsg] = useState('');
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -15,14 +20,38 @@ export default function Register() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Register logic here', { role, ...formData });
+    setError(null);
+    setSuccessMsg('');
+    setLoading(true);
+    
+    try {
+      const payload = {
+        role,
+        fullName: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+      };
+      
+      if (role === 'entreprise') {
+        payload.companyName = formData.companyName;
+      } else {
+        payload.firmName = formData.companyName; // reusing companyName state for firmName
+      }
+      
+      const response = await authApi.register(payload);
+      setSuccessMsg(response.message || 'Compte créé avec succès !');
+      setTimeout(() => navigate('/login'), 3000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Decorative background blobs */}
       <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-primary-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
       <div className="absolute top-[20%] left-[-10%] w-96 h-96 bg-primary-300 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
       
@@ -66,6 +95,17 @@ export default function Register() {
           </div>
 
           <form className="space-y-5" onSubmit={handleSubmit}>
+            {error && (
+              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm flex items-start">
+                <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
+                <span>{error}</span>
+              </div>
+            )}
+            {successMsg && (
+              <div className="p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm font-medium">
+                {successMsg}
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
               <div className="relative">
@@ -141,9 +181,9 @@ export default function Register() {
             </div>
 
             <div className="pt-2">
-              <button type="submit" className="btn-primary group">
-                Create Account
-                <UserPlus className="ml-2 h-5 w-5 opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all" />
+              <button type="submit" disabled={loading} className="btn-primary group disabled:opacity-70 disabled:cursor-not-allowed">
+                {loading ? 'Création en cours...' : 'Create Account'}
+                {!loading && <UserPlus className="ml-2 h-5 w-5 opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all" />}
               </button>
             </div>
           </form>
