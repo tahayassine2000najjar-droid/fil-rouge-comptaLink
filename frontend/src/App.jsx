@@ -2,6 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import Dashboard from './pages/dashboard/Dashboard';
+import CabinetsList from './pages/cabinets/CabinetsList';
+import Profile from './pages/profile/Profile';
 import Layout from './components/layout/Layout';
 
 function App() {
@@ -10,13 +12,14 @@ function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         
-        {/* Public Routes */}
+      
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        
         {/* Protected Routes */}
         <Route element={<Layout />}>
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/cabinets" element={<CabinetsList />} />
+          <Route path="/profile" element={<Profile />} />
         </Route>
       </Routes>
     </Router>

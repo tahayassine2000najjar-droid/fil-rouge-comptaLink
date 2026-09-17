@@ -44,7 +44,7 @@ const cabinetProfileSchema = new mongoose.Schema(
       ],
       default: [],
     },
-    status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending', index: true },
+    status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'approved', index: true },
     rejectionReason: { type: String, default: '' },
     ratingAvg: { type: Number, default: 0, min: 0, max: 5 },
     reviewCount: { type: Number, default: 0 },
