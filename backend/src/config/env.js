@@ -19,6 +19,5 @@ export const env = {
   mailFrom: process.env.MAIL_FROM || 'ComptaLink <no-reply@comptalink.local>',
   appUrl: process.env.APP_URL || 'http://localhost:3000',
   apiUrl: process.env.API_URL || 'http://localhost:4000',
-  uploadDir: process.env.UPLOAD_DIR || 'uploads',
-  maxFileSizeMb: Number(process.env.MAX_FILE_SIZE_MB) || 10,
+
 };
