@@ -12,7 +12,6 @@ import {
   signRefreshToken,
   verifyRefreshToken,
 } from '../utils/tokens.js';
-import { sendMail } from '../utils/mailer.js';
 import { env } from '../config/env.js';
 
 const registerSchema = z.object({
@@ -34,6 +33,53 @@ const updateMeSchema = z.object({
   password: z.string().min(8).optional(),
   profile: z.record(z.string(), z.unknown()).optional(),
 });
+
+const ENTREPRISE_PROFILE_FIELDS = [
+  'companyName',
+  'legalForm',
+  'siret',
+  'industry',
+  'size',
+  'description',
+  'website',
+  'address',
+  'city',
+  'country',
+  'phone',
+  'logo',
+  'foundedYear',
+];
+
+const CABINET_PROFILE_FIELDS = [
+  'firmName',
+  'tagline',
+  'description',
+  'legalForm',
+  'address',
+  'city',
+  'country',
+  'phone',
+  'emailContact',
+  'website',
+  'logo',
+  'coverImage',
+  'experienceYears',
+  'teamSize',
+  'services',
+  'specialities',
+  'certifications',
+];
+
+function pickProfileFields(profile, allowed) {
+  const result = {};
+  if (!profile) return result;
+  for (const key of allowed) {
+    if (Object.prototype.hasOwnProperty.call(profile, key)) {
+      result[key] = profile[key];
+    }
+  }
+  return result;
+}
 
 export const register = asyncHandler(async (req, res) => {
   const data = registerSchema.parse(req.body);
@@ -63,15 +109,7 @@ export const register = asyncHandler(async (req, res) => {
     await CabinetProfile.create({ user: user._id, firmName, slug });
   }
 
-  const verifyUrl = `${env.appUrl}/verify-email?token=${verificationToken}`;
-  await sendMail({
-    to: user.email,
-    subject: 'ComptaLink - Confirmez votre adresse email',
-    html: `<p>Bonjour ${user.fullName},</p>
-      <p>Bienvenue sur <strong>ComptaLink</strong> ! Cliquez sur le lien ci-dessous pour confirmer votre adresse email :</p>
-      <p><a href="${verifyUrl}">${verifyUrl}</a></p>
-      <p>Ce lien expire dans 24 heures.</p>`,
-  });
+  // Email verification link: ${env.appUrl}/verify-email?token=${verificationToken}
 
   res.status(201).json({
     success: true,
@@ -113,11 +151,7 @@ export const resendVerification = asyncHandler(async (req, res) => {
   user.verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
   await user.save();
 
-  await sendMail({
-    to: user.email,
-    subject: 'ComptaLink - Confirmez votre adresse email',
-    html: `<p>Bonjour, cliquez sur ce lien pour vérifier votre email : <a href="${env.appUrl}/verify-email?token=${token}">${env.appUrl}/verify-email?token=${token}</a></p>`,
-  });
+  // Email verification link: ${env.appUrl}/verify-email?token=${token}
 
   res.json({ success: true, message: 'Email de vérification renvoyé.' });
 });
@@ -195,14 +229,7 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000);
   await user.save();
 
-  await sendMail({
-    to: user.email,
-    subject: 'ComptaLink - Réinitialisation du mot de passe',
-    html: `<p>Bonjour ${user.fullName},</p>
-      <p>Cliquez sur le lien ci-dessous pour réinitialiser votre mot de passe :</p>
-      <p><a href="${env.appUrl}/reset-password?token=${token}">${env.appUrl}/reset-password?token=${token}</a></p>
-      <p>Ce lien expire dans 1 heure.</p>`,
-  });
+  // Password reset link: ${env.appUrl}/reset-password?token=${token}
 
   res.json({ success: true, message: 'Si cet email existe, un lien de réinitialisation a été envoyé.' });
 });
@@ -255,17 +282,19 @@ export const updateMe = asyncHandler(async (req, res) => {
 
   let profile;
   if (user.role === 'entreprise') {
-    profile = await EntrepriseProfile.findOneAndUpdate(
-      { user: user._id },
-      { $set: data.profile || {} },
-      { new: true, runValidators: true }
-    );
+    profile = await EntrepriseProfile.findOne({ user: user._id });
+    const fields = pickProfileFields(data.profile, ENTREPRISE_PROFILE_FIELDS);
+    if (profile && Object.keys(fields).length > 0) {
+      Object.assign(profile, fields);
+      await profile.save();
+    }
   } else if (user.role === 'cabinet') {
-    profile = await CabinetProfile.findOneAndUpdate(
-      { user: user._id },
-      { $set: data.profile || {} },
-      { new: true, runValidators: true }
-    );
+    profile = await CabinetProfile.findOne({ user: user._id });
+    const fields = pickProfileFields(data.profile, CABINET_PROFILE_FIELDS);
+    if (profile && Object.keys(fields).length > 0) {
+      Object.assign(profile, fields);
+      await profile.save();
+    }
   }
 
   res.json({ success: true, user, profile });
