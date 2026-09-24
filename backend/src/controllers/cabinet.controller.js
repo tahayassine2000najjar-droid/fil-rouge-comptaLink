@@ -1,8 +1,7 @@
-import { z } from 'zod';
+﻿import { z } from 'zod';
 import { CabinetProfile } from '../models/CabinetProfile.js';
 import { AppError } from '../utils/AppError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { publicUrl } from '../utils/upload.js';
 
 const listQuerySchema = z.object({
   search: z.string().optional(),
@@ -85,13 +84,12 @@ export const getCabinet = asyncHandler(async (req, res) => {
 
 export const getMyCabinet = asyncHandler(async (req, res) => {
   const cabinet = await CabinetProfile.findOne({ user: req.user.id }).populate('user', 'email createdAt');
-  if (!cabinet) throw new AppError(404, 'Profil cabinet introuvable. Contactez le support.');
+  if (!cabinet) throw new AppAppError(404, 'Profil cabinet introuvable. Contactez le support.');
   res.json({ success: true, data: cabinet });
 });
 
 export const updateMyCabinet = asyncHandler(async (req, res) => {
   const data = updateSchema.parse(req.body);
-  console.log('Update Cabinet req.body:', req.body, 'Parsed data:', data);
 
   const cabinet = await CabinetProfile.findOneAndUpdate(
     { user: req.user.id },
@@ -101,34 +99,5 @@ export const updateMyCabinet = asyncHandler(async (req, res) => {
 
   if (!cabinet) throw new AppError(404, 'Profil cabinet introuvable');
 
-  res.json({ success: true, data: cabinet });
-});
-
-export const uploadDocument = asyncHandler(async (req, res) => {
-  const cabinet = await CabinetProfile.findOne({ user: req.user.id });
-  if (!cabinet) throw new AppError(404, 'Profil cabinet introuvable');
-  if (!req.file) throw new AppError(400, 'Aucun fichier fourni');
-
-  cabinet.documents.push({
-    name: req.file.originalname,
-    filePath: publicUrl(req.file.path),
-    uploadedAt: new Date(),
-  });
-
-  if (cabinet.status === 'rejected') {
-    cabinet.status = 'pending';
-    cabinet.rejectionReason = '';
-  }
-
-  await cabinet.save();
-  res.status(201).json({ success: true, data: cabinet });
-});
-
-export const removeDocument = asyncHandler(async (req, res) => {
-  const cabinet = await CabinetProfile.findOne({ user: req.user.id });
-  if (!cabinet) throw new AppError(404, 'Profil cabinet introuvable');
-
-  cabinet.documents = cabinet.documents.filter((d) => d._id?.toString() !== req.params.docId);
-  await cabinet.save();
   res.json({ success: true, data: cabinet });
 });

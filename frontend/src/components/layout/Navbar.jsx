@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { authApi } from '../../lib/api';
-import { LogOut, User, Menu, X, Building2, Briefcase } from 'lucide-react';
+import { LogOut, User, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 
 export default function Navbar() {
@@ -14,15 +14,19 @@ export default function Navbar() {
     navigate('/login');
   };
 
-  if (!user) return null; // Don't show navbar on public/auth pages if wanted
+  if (!user) return null;
 
-  const navLinks = user.role === 'entreprise' 
+  const isEntreprise = user.role === 'entreprise';
+
+  const navLinks = isEntreprise 
     ? [
-        { name: 'Dashboard', path: '/dashboard' },
-        { name: 'Cabinets', path: '/cabinets' },
+        { name: 'Tableau de bord', path: '/dashboard' },
+        { name: 'Trouver un Cabinet', path: '/cabinets' },
+        { name: 'Mes demandes', path: '/quotes' },
       ]
     : [
-        { name: 'Dashboard', path: '/dashboard' },
+        { name: 'Tableau de bord', path: '/dashboard' },
+        { name: 'Demandes Reçues', path: '/quotes' },
       ];
 
   return (
@@ -31,11 +35,14 @@ export default function Navbar() {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/dashboard" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center shadow-md">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shadow-md ${isEntreprise ? 'bg-primary-500' : 'bg-blue-600'}`}>
                 <span className="text-white font-bold text-lg">C</span>
               </div>
-              <span className="text-xl font-bold text-gray-900 tracking-tight">
-                Compta<span className="text-primary-500">Link</span>
+              <span className="text-xl font-bold text-gray-900 tracking-tight flex items-center">
+                Compta<span className={isEntreprise ? 'text-primary-500' : 'text-blue-600'}>Link</span>
+                <span className="ml-3 px-2 py-0.5 rounded-full bg-gray-100 text-xs font-medium text-gray-600 hidden sm:block border">
+                  {isEntreprise ? 'Entreprise' : 'Cabinet'}
+                </span>
               </span>
             </Link>
             <div className="hidden md:ml-10 md:flex md:space-x-8">
@@ -44,8 +51,8 @@ export default function Navbar() {
                   key={link.name}
                   to={link.path}
                   className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                    location.pathname === link.path
-                      ? 'border-primary-500 text-gray-900'
+                    location.pathname === link.path && link.path !== '#'
+                      ? isEntreprise ? 'border-primary-500 text-gray-900' : 'border-blue-600 text-gray-900'
                       : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                   }`}
                 >
@@ -71,7 +78,6 @@ export default function Navbar() {
             </button>
           </div>
           
-          {/* Mobile menu button */}
           <div className="flex items-center md:hidden">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -83,7 +89,6 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu */}
       {isMenuOpen && (
         <div className="md:hidden bg-white border-t border-gray-100">
           <div className="pt-2 pb-3 space-y-1">
@@ -92,8 +97,8 @@ export default function Navbar() {
                 key={link.name}
                 to={link.path}
                 className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
-                  location.pathname === link.path
-                    ? 'bg-primary-50 border-primary-500 text-primary-700'
+                  location.pathname === link.path && link.path !== '#'
+                    ? isEntreprise ? 'bg-primary-50 border-primary-500 text-primary-700' : 'bg-blue-50 border-blue-600 text-blue-700'
                     : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'
                 }`}
               >
