@@ -1,20 +1,17 @@
-import { z } from 'zod';
+﻿import { z } from 'zod';
 import { QuoteRequest } from '../models/QuoteRequest.js';
 import { CabinetProfile } from '../models/CabinetProfile.js';
 import { User } from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { notify } from '../utils/notification.js';
-import { sendMail } from '../utils/mailer.js';
-import { buildQuotePdf } from '../utils/pdf.js';
- import { env } from '../config/env.js';
 
 const createSchema = z.object({
-  cabinet: z.string().min(1),
-  service: z.string().min(2),
+  cabinet: z.string().min(1, 'Le cabinet est requis'),
+  service: z.string().min(2, 'Veuillez préciser le service souhaité (minimum 2 caractères)'),
   budget: z.string().optional(),
   timeline: z.string().optional(),
-  description: z.string().min(10),
+  description: z.string().min(10, 'La description doit contenir au moins 10 caractères pour que le cabinet puisse comprendre votre besoin.'),
   documents: z.array(z.string()).optional(),
 });
 
@@ -51,14 +48,9 @@ export const createQuote = asyncHandler(async (req, res) => {
     data.cabinet,
     'quote',
     'Nouvelle demande de devis',
-    `Vous avez re\u00e7u une demande de devis (${data.service}).`,
+    `Vous avez reçu une demande de devis (${data.service}).`,
     { quoteId: quote._id.toString() }
   );
-  await sendMail({
-    to: cabinetUser.email,
-    subject: 'ComptaLink - Nouvelle demande de devis',
-    html: `<p>Vous avez re\u00e7u une nouvelle demande de devis. Connectez-vous \u00e0 votre espace pour y r\u00e9pondre.</p>`,
-  });
 
   res.status(201).json({ success: true, data: quote });
 });
@@ -105,7 +97,7 @@ export const getQuote = asyncHandler(async (req, res) => {
     quote.entreprise._id.toString() === req.user.id ||
     quote.cabinet._id.toString() === req.user.id;
   if (!isInvolved && req.user.role !== 'admin') {
-    throw new AppError(403, 'Acc\u00e8s refus\u00e9');
+    throw new AppError(403, 'Accès refusé');
   }
   res.json({ success: true, data: quote });
 });
@@ -114,8 +106,8 @@ export const respondToQuote = asyncHandler(async (req, res) => {
   const data = respondSchema.parse(req.body);
   const quote = await QuoteRequest.findById(req.params.id).populate('entreprise', 'email fullName');
   if (!quote) throw new AppError(404, 'Demande introuvable');
-  if (quote.cabinet.toString() !== req.user.id) throw new AppError(403, 'Seul le cabinet concern\u00e9 peut r\u00e9pondre');
-  if (quote.status !== 'pending') throw new AppError(400, 'Cette demande a d\u00e9j\u00e0 \u00e9t\u00e9 trait\u00e9e');
+  if (quote.cabinet.toString() !== req.user.id) throw new AppError(403, 'Seul le cabinet concerné peut répondre');
+  if (quote.status !== 'pending') throw new AppError(400, 'Cette demande a déjà été traitée');
 
   quote.status = data.status;
   quote.response = {
@@ -126,19 +118,14 @@ export const respondToQuote = asyncHandler(async (req, res) => {
   };
   await quote.save();
 
-  const statusLabel = data.status === 'accepted' ? 'accept\u00e9e' : 'refus\u00e9e';
+  const statusLabel = data.status === 'accepted' ? 'acceptée' : 'refusée';
   await notify(
     quote.entreprise._id.toString(),
     'quote',
-    'R\u00e9ponse \u00e0 votre demande de devis',
-    `Votre demande de devis a \u00e9t\u00e9 ${statusLabel}.`,
+    'Réponse à votre demande de devis',
+    `Votre demande de devis a été ${statusLabel}.`,
     { quoteId: quote._id.toString() }
   );
-  await sendMail({
-    to: quote.entreprise.email,
-    subject: 'ComptaLink - R\u00e9ponse \u00e0 votre demande de devis',
-    html: `<p>Votre demande de devis a \u00e9t\u00e9 ${statusLabel}. Consultez votre espace pour plus de d\u00e9tails.</p>`,
-  });
 
   res.json({ success: true, data: quote });
 });
@@ -146,40 +133,10 @@ export const respondToQuote = asyncHandler(async (req, res) => {
 export const cancelQuote = asyncHandler(async (req, res) => {
   const quote = await QuoteRequest.findById(req.params.id);
   if (!quote) throw new AppError(404, 'Demande introuvable');
-  if (quote.entreprise.toString() !== req.user.id) throw new AppError(403, 'Acc\u00e8s refus\u00e9');
-  if (quote.status !== 'pending') throw new AppError(400, 'Cette demande ne peut plus \u00eatre annul\u00e9e');
+  if (quote.entreprise.toString() !== req.user.id) throw new AppError(403, 'Accès refusé');
+  if (quote.status !== 'pending') throw new AppError(400, 'Cette demande ne peut plus être annulée');
 
   quote.status = 'cancelled';
   await quote.save();
   res.json({ success: true, data: quote });
-});
-
-export const exportQuotePdf = asyncHandler(async (req, res) => {
-  const quote = await QuoteRequest.findById(req.params.id)
-    .populate('entreprise', 'fullName')
-    .populate('cabinet', 'fullName');
-  if (!quote) throw new AppError(404, 'Demande introuvable');
-
-  const isInvolved =
-    quote.entreprise._id.toString() === req.user.id ||
-    quote.cabinet._id.toString() === req.user.id;
-  if (!isInvolved && req.user.role !== 'admin') throw new AppError(403, 'Acc\u00e8s refus\u00e9');
-
-  const cabinetProfile = await CabinetProfile.findOne({ user: quote.cabinet._id });
-  const entrepriseName = quote.entreprise.fullName || 'Entreprise';
-  const cabinetName =
-    cabinetProfile?.firmName ||
-    quote.cabinet.fullName ||
-    'Cabinet';
-  const pdf = await buildQuotePdf(
-    quote,
-    cabinetName,
-    entrepriseName,
-    quote.service
-  );
-
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `attachment; filename="devis-${quote._id}.pdf"`);
-  res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
-  res.send(Buffer.from(pdf));
 });

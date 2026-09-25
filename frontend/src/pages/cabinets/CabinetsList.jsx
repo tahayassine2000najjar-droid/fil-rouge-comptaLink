@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { cabinetApi } from '../../lib/api';
 import { Search, MapPin, Star, Building } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function CabinetsList() {
   const [cabinets, setCabinets] = useState([]);
@@ -77,9 +78,9 @@ export default function CabinetsList() {
                   <MapPin className="w-4 h-4 mr-1.5" />
                   {cab.address || 'Adresse non spécifiée'}
                 </div>
-                <button className="w-full btn-primary py-2.5 shadow-none hover:shadow-none hover:bg-primary-600">
+                <Link to={`/cabinets/${cab._id}`} className="w-full btn-primary py-2.5 shadow-none hover:shadow-none hover:bg-primary-600 block text-center">
                   Voir le profil
-                </button>
+                </Link>
               </div>
             </div>
           ))}
