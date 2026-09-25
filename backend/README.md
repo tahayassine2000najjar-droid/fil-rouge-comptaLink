@@ -7,8 +7,13 @@ Backend API for the ComptaLink project, an application built to serve as a compr
 - **Authentication & Authorization**: JWT-based authentication with role-based access control (Entreprise, Cabinet, Admin).
 - **CRUD Operations**: Complete CRUD for Entreprises and Cabinets profiles.
 - **Validation**: Data validation using Zod schemas.
-- **Security**: Password hashing with bcrypt, rate limiting, helmet, and secure routing.
-- **File Uploads**: Supports uploading documents.
+- **Security**: Password hashing with bcrypt, helmet, and secure routing.
+
+## Future Improvements
+
+- Adding upload (to PDF) logic for generating and downloading quote PDFs.
+- Adding appointment scheduling logic for managing meetings between entreprises and cabinets.
+- Adding rate-limiting to protect API endpoints from abuse.
 
 ## Requirements
 
@@ -35,7 +40,7 @@ Backend API for the ComptaLink project, an application built to serve as a compr
 - `PORT`: Port to run the server on (default: 4000)
 - `MONGO_URI`: MongoDB connection string
 - `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET`: Secrets for signing tokens
-- `SMTP_*`: Email configuration for sending verification emails
+- `APP_URL`: Frontend application URL
 
 ## Utilisation
 
@@ -54,23 +59,6 @@ npm start
 npm test
 ```
 
-## Déploiement (Guide)
-
-### Option 1: Docker Compose
-
-The project includes a `docker-compose.yml` that sets up both the API and MongoDB.
-
-```bash
-docker-compose up -d --build
-```
-
-### Option 2: CI/CD & Cloud Hosting (e.g., Render, Railway, Vercel)
-
-1. Connect your GitHub repository to Render/Railway.
-2. Set the build command to `npm install` and start command to `npm start`.
-3. Add the environment variables from your `.env` file to the platform's dashboard.
-4. The project uses GitHub Actions `.github/workflows/ci.yml` for continuous integration (testing on push/PR).
-
 ## API Endpoints
 
 ### Auth
@@ -80,8 +68,13 @@ docker-compose up -d --build
 - `POST /api/auth/logout` - Logout user
 - `GET /api/me` - Get current user profile
 - `PATCH /api/me` - Update current user profile
+- `GET /api/auth/verify-email` - Verify email address
+- `POST /api/auth/resend-verification` - Resend verification email
+- `POST /api/auth/forgot-password` - Request password reset
+- `POST /api/auth/reset-password` - Reset password
 
 ### Entreprise
+- `POST /api/entreprise` - Create entreprise profile
 - `GET /api/entreprise/me` - Get current entreprise profile
 - `PATCH /api/entreprise/me` - Update entreprise profile
 - `DELETE /api/entreprise/me` - Delete entreprise profile
@@ -91,5 +84,10 @@ docker-compose up -d --build
 - `GET /api/cabinets/:id` - Get specific cabinet
 - `GET /api/cabinet/me` - Get current cabinet profile
 - `PATCH /api/cabinet/me` - Update cabinet profile
-- `POST /api/cabinet/me/documents` - Upload document
-- `DELETE /api/cabinet/me/documents/:docId` - Delete document
+
+### Quotes
+- `POST /api/quotes` - Create a quote request (entreprise only)
+- `GET /api/quotes` - List user's quotes
+- `GET /api/quotes/:id` - Get specific quote
+- `POST /api/quotes/:id/respond` - Respond to a quote (cabinet only)
+- `POST /api/quotes/:id/cancel` - Cancel a quote request (entreprise only)
