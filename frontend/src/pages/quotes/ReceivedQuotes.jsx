@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { quoteApi } from '../../lib/api';
 import StatusBadge from '../../components/ui/StatusBadge';
-import { Inbox, Clock, Euro, CalendarDays, AlertCircle, MessageSquare } from 'lucide-react';
+import { Inbox, Clock, Euro, CalendarDays, AlertCircle, MessageSquare, Building2 } from 'lucide-react';
 
 export default function ReceivedQuotes() {
   const [quotes, setQuotes] = useState([]);
