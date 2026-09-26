@@ -9,6 +9,7 @@ import CabinetsList from './pages/cabinets/CabinetsList';
 import CabinetDetail from './pages/cabinets/CabinetDetail';
 import MyQuotes from './pages/quotes/MyQuotes';
 import ReceivedQuotes from './pages/quotes/ReceivedQuotes';
+import QuoteDetail from './pages/quotes/QuoteDetail';
 import Profile from './pages/profile/Profile';
 import Layout from './components/layout/Layout';
 
@@ -34,6 +35,7 @@ function App() {
           <Route path="/cabinets" element={<CabinetsList />} />
           <Route path="/cabinets/:id" element={<CabinetDetail />} />
           <Route path="/quotes" element={<QuotesRoute />} />
+          <Route path="/quotes/:id" element={<QuoteDetail />} />
           <Route path="/profile" element={<Profile />} />
         </Route>
       </Routes>
