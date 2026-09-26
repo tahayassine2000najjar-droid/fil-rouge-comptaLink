@@ -25,7 +25,6 @@ export default function QuoteDetail() {
   const [me] = useState(() => JSON.parse(localStorage.getItem('user') || 'null'));
   const role = me?.role === 'cabinet' ? 'cabinet' : 'entreprise';
   const isEntreprise = role === 'entreprise';
-  const accent = isEntreprise ? 'primary' : 'blue';
 
   const [quote, setQuote] = useState(null);
   const [loading, setLoading] = useState(true);
