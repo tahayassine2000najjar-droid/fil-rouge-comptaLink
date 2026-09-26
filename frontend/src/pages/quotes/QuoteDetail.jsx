@@ -58,7 +58,7 @@ export default function QuoteDetail() {
   }, [load]);
 
   useEffect(() => {
-    threadEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    threadEndRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
   }, [quote?.messages?.length]);
 
   const flash = (text) => {
@@ -322,7 +322,14 @@ export default function QuoteDetail() {
 
             {!conversationOpen ? (
               <p className="text-sm text-gray-500 bg-gray-50 rounded-xl p-4 border border-gray-100">
-                La conversation sera ouverte dès que {isEntreprise ? 'le cabinet aura accepté' : 'vous aurez accepté'} cette demande.
+                {quote.status === 'pending' &&
+                  (isEntreprise
+                    ? 'La conversation sera ouverte dès que le cabinet aura accepté cette demande.'
+                    : 'Répondez à cette demande pour ouvrir la conversation avec cette entreprise.')}
+                {quote.status === 'declined' &&
+                  'Cette demande a été refusée par le cabinet, la conversation est donc close.'}
+                {quote.status === 'cancelled' &&
+                  'Cette demande a été annulée, la conversation est donc close.'}
               </p>
             ) : (
               <>

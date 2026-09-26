@@ -11,6 +11,9 @@ export default function MyQuotes() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editingId, setEditingId] = useState(null);
+  const [openReplyId, setOpenReplyId] = useState(null);
+  const [reply, setReply] = useState('');
+  const [sending, setSending] = useState(false);
   const [form, setForm] = useState({ service: '', budget: '', timeline: '', description: '' });
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
@@ -76,6 +79,24 @@ export default function MyQuotes() {
       setError(err.message);
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleSendReply = async (e) => {
+    e.preventDefault();
+    const body = reply.trim();
+    if (!body) return;
+    setSending(true);
+    setError(null);
+    try {
+      await quoteApi.sendMessage(openReplyId, body);
+      setReply('');
+      setOpenReplyId(null);
+      await load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSending(false);
     }
   };
 
@@ -217,6 +238,16 @@ export default function MyQuotes() {
                       {q.messages?.length > 0 && ` (${q.messages.length})`}
                     </Link>
 
+                    {(q.status === 'accepted' || q.status === 'completed') && (
+                      <button
+                        onClick={() => (openReplyId === q._id ? setOpenReplyId(null) : (setOpenReplyId(q._id), setReply('')))}
+                        className="px-4 py-2 text-sm font-medium text-white bg-primary-500 rounded-lg hover:bg-primary-600 transition-colors flex items-center"
+                      >
+                        <MessageSquare className="w-4 h-4 mr-1" />
+                        {openReplyId === q._id ? 'Fermer' : 'Répondre'}
+                      </button>
+                    )}
+
                     {q.status === 'pending' && (
                       <>
                         <button
@@ -242,6 +273,31 @@ export default function MyQuotes() {
                       </>
                     )}
                   </div>
+
+                  {openReplyId === q._id && (
+                    <form
+                      onSubmit={handleSendReply}
+                      className="mt-4 border-t border-gray-100 pt-4 space-y-3"
+                    >
+                      <textarea
+                        rows={3}
+                        className="input-field resize-none"
+                        placeholder="Répondre au cabinet..."
+                        value={reply}
+                        onChange={(e) => setReply(e.target.value)}
+                        maxLength={2000}
+                      />
+                      <div className="flex justify-end">
+                        <button
+                          type="submit"
+                          disabled={sending || !reply.trim()}
+                          className="px-6 py-2 text-sm font-medium text-white bg-primary-500 rounded-lg hover:bg-primary-600 disabled:opacity-70"
+                        >
+                          {sending ? 'Envoi...' : 'Envoyer le message'}
+                        </button>
+                      </div>
+                    </form>
+                  )}
                 </>
               )}
             </div>
