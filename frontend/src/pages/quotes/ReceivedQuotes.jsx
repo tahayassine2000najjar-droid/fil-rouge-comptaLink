@@ -1,25 +1,8 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { quoteApi } from '../../lib/api';
-import { Inbox, Clock, CheckCircle2, XCircle, Ban, Building2, Euro, CalendarDays, AlertCircle } from 'lucide-react';
-
-const STATUS = {
-  pending: { label: 'En attente', className: 'bg-amber-50 text-amber-700 border-amber-200', Icon: Clock },
-  accepted: { label: 'Acceptée', className: 'bg-green-50 text-green-700 border-green-200', Icon: CheckCircle2 },
-  declined: { label: 'Refusée', className: 'bg-red-50 text-red-700 border-red-200', Icon: XCircle },
-  completed: { label: 'Terminée', className: 'bg-blue-50 text-blue-700 border-blue-200', Icon: CheckCircle2 },
-  cancelled: { label: 'Annulée', className: 'bg-gray-100 text-gray-600 border-gray-200', Icon: Ban },
-};
-
-function StatusBadge({ status }) {
-  const config = STATUS[status] || STATUS.pending;
-  const { Icon } = config;
-  return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${config.className}`}>
-      <Icon className="w-3.5 h-3.5 mr-1" />
-      {config.label}
-    </span>
-  );
-}
+import StatusBadge from '../../components/ui/StatusBadge';
+import { Inbox, Clock, Euro, CalendarDays, AlertCircle, MessageSquare } from 'lucide-react';
 
 export default function ReceivedQuotes() {
   const [quotes, setQuotes] = useState([]);
@@ -144,16 +127,24 @@ export default function ReceivedQuotes() {
                 </div>
               )}
 
-              {q.status === 'pending' && (
-                <div className="mt-4 flex justify-end">
+              <div className="mt-4 flex flex-wrap justify-end gap-3">
+                <Link
+                  to={`/quotes/${q._id}`}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
+                >
+                  <MessageSquare className="w-4 h-4 mr-1" /> Voir la demande
+                  {q.messages?.length > 0 && ` (${q.messages.length})`}
+                </Link>
+
+                {q.status === 'pending' && (
                   <button
                     onClick={() => (openId === q._id ? setOpenId(null) : openRespond(q._id))}
                     className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     {openId === q._id ? 'Fermer' : 'Répondre'}
                   </button>
-                </div>
-              )}
+                )}
+              </div>
 
               {openId === q._id && (
                 <form onSubmit={handleRespond} className="mt-5 border-t border-gray-100 pt-5 space-y-4">
@@ -205,7 +196,7 @@ export default function ReceivedQuotes() {
                   <textarea
                     rows="3"
                     className="input-field resize-none"
-                    placeholder="Message pour l'entreprise..."
+                    placeholder="Message pour l'entreprise (premier message de la conversation si vous acceptez)"
                     value={form.message}
                     onChange={(e) => setForm({ ...form, message: e.target.value })}
                   ></textarea>
