@@ -87,10 +87,72 @@ router.patch('/cabinet/me', authMiddleware, requireRole('cabinet'), cabinet.upda
  *       404:
  *         description: Cabinet not found
  */
+/**
+ * @openapi
+ * /api/quotes/{id}/messages:
+ *   post:
+ *     summary: Reply in the quote conversation
+ *     description: Adds a message to the conversation thread. Available to both the entreprise and the cabinet, but only once the cabinet has accepted the request.
+ *     tags: [Quotes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [body]
+ *             properties:
+ *               body:
+ *                 type: string
+ *                 minLength: 1
+ *                 maxLength: 2000
+ *     responses:
+ *       201:
+ *         description: Message added to the thread
+ *       400:
+ *         description: Conversation not open yet or empty message
+ *       403:
+ *         description: Forbidden - not a participant of this quote
+ *       404:
+ *         description: Quote not found
+ *
+ * /api/quotes/{id}/accept-terms:
+ *   post:
+ *     summary: Accept the agreed terms
+ *     description: Records that the current user accepts the conditions of an accepted quote. Once both the entreprise and the cabinet have accepted, the quote status switches to completed.
+ *     tags: [Quotes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Terms accepted
+ *       400:
+ *         description: Quote not accepted yet, or already accepted by this user
+ *       403:
+ *         description: Forbidden - not a participant of this quote
+ *       404:
+ *         description: Quote not found
+ */
 router.post('/quotes', authMiddleware, requireRole('entreprise'), quote.createQuote);
 router.get('/quotes', authMiddleware, quote.myQuotes);
 router.get('/quotes/:id', authMiddleware, quote.getQuote);
+router.patch('/quotes/:id', authMiddleware, requireRole('entreprise'), quote.updateQuote);
+router.delete('/quotes/:id', authMiddleware, requireRole('entreprise'), quote.deleteQuote);
 router.post('/quotes/:id/respond', authMiddleware, requireRole('cabinet'), quote.respondToQuote);
+router.post('/quotes/:id/messages', authMiddleware, quote.addMessage);
+router.post('/quotes/:id/accept-terms', authMiddleware, quote.acceptTerms);
 
 router.post('/quotes/:id/cancel', authMiddleware, requireRole('entreprise'), quote.cancelQuote);
 

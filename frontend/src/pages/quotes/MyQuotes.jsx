@@ -1,30 +1,22 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { quoteApi } from '../../lib/api';
-import { FileText, Clock, CheckCircle2, XCircle, Ban, Building2, Euro, CalendarDays, AlertCircle } from 'lucide-react';
-
-const STATUS = {
-  pending: { label: 'En attente', className: 'bg-amber-50 text-amber-700 border-amber-200', Icon: Clock },
-  accepted: { label: 'Acceptée', className: 'bg-green-50 text-green-700 border-green-200', Icon: CheckCircle2 },
-  declined: { label: 'Refusée', className: 'bg-red-50 text-red-700 border-red-200', Icon: XCircle },
-  completed: { label: 'Terminée', className: 'bg-blue-50 text-blue-700 border-blue-200', Icon: CheckCircle2 },
-  cancelled: { label: 'Annulée', className: 'bg-gray-100 text-gray-600 border-gray-200', Icon: Ban },
-};
-
-function StatusBadge({ status }) {
-  const config = STATUS[status] || STATUS.pending;
-  const { Icon } = config;
-  return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${config.className}`}>
-      <Icon className="w-3.5 h-3.5 mr-1" />
-      {config.label}
-    </span>
-  );
-}
+import StatusBadge from '../../components/ui/StatusBadge';
+import {
+  FileText, Clock, Euro, CalendarDays, AlertCircle, Pencil, Trash2, MessageSquare, X, Building2,
+} from 'lucide-react';
 
 export default function MyQuotes() {
   const [quotes, setQuotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [openReplyId, setOpenReplyId] = useState(null);
+  const [reply, setReply] = useState('');
+  const [sending, setSending] = useState(false);
+  const [form, setForm] = useState({ service: '', budget: '', timeline: '', description: '' });
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   const load = async () => {
     try {
@@ -47,6 +39,64 @@ export default function MyQuotes() {
       await load();
     } catch (err) {
       setError(err.message);
+    }
+  };
+
+  const startEdit = (q) => {
+    setEditingId(q._id);
+    setError(null);
+    setForm({
+      service: q.service || '',
+      budget: q.budget || '',
+      timeline: q.timeline || '',
+      description: q.description || '',
+    });
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    try {
+      await quoteApi.updateQuote(editingId, form);
+      setEditingId(null);
+      await load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (q) => {
+    if (!window.confirm(`Supprimer définitivement la demande « ${q.service} » ? Cette action est irréversible.`)) return;
+    setDeletingId(q._id);
+    setError(null);
+    try {
+      await quoteApi.deleteQuote(q._id);
+      await load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleSendReply = async (e) => {
+    e.preventDefault();
+    const body = reply.trim();
+    if (!body) return;
+    setSending(true);
+    setError(null);
+    try {
+      await quoteApi.sendMessage(openReplyId, body);
+      setReply('');
+      setOpenReplyId(null);
+      await load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSending(false);
     }
   };
 
@@ -97,42 +147,158 @@ export default function MyQuotes() {
                 <StatusBadge status={q.status} />
               </div>
 
-              <p className="mt-4 text-sm text-gray-600 whitespace-pre-wrap">{q.description}</p>
+              {editingId === q._id ? (
+                <form onSubmit={handleSave} className="mt-4 border-t border-gray-100 pt-5 space-y-4">
+                  <input
+                    type="text"
+                    className="input-field"
+                    placeholder="Service"
+                    value={form.service}
+                    onChange={(e) => setForm({ ...form, service: e.target.value })}
+                    required
+                    minLength={2}
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <input
+                      type="text"
+                      className="input-field"
+                      placeholder="Budget"
+                      value={form.budget}
+                      onChange={(e) => setForm({ ...form, budget: e.target.value })}
+                    />
+                    <input
+                      type="text"
+                      className="input-field"
+                      placeholder="Délai souhaité"
+                      value={form.timeline}
+                      onChange={(e) => setForm({ ...form, timeline: e.target.value })}
+                    />
+                  </div>
+                  <textarea
+                    rows={4}
+                    className="input-field resize-none"
+                    placeholder="Description de votre besoin"
+                    value={form.description}
+                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                    required
+                    minLength={10}
+                  />
+                  <div className="flex justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setEditingId(null)}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={saving}
+                      className="px-6 py-2 text-sm font-medium text-white bg-primary-500 rounded-lg hover:bg-primary-600 disabled:opacity-70"
+                    >
+                      {saving ? 'Enregistrement...' : 'Enregistrer'}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <>
+                  <p className="mt-4 text-sm text-gray-600 whitespace-pre-wrap">{q.description}</p>
 
-              <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-500">
-                {q.budget && (
-                  <span className="flex items-center">
-                    <Euro className="w-4 h-4 mr-1" /> Budget : {q.budget}
-                  </span>
-                )}
-                {q.timeline && (
-                  <span className="flex items-center">
-                    <CalendarDays className="w-4 h-4 mr-1" /> Délai : {q.timeline}
-                  </span>
-                )}
-                <span className="flex items-center">
-                  <Clock className="w-4 h-4 mr-1" /> {new Date(q.createdAt).toLocaleDateString('fr-FR')}
-                </span>
-              </div>
+                  <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-500">
+                    {q.budget && (
+                      <span className="flex items-center">
+                        <Euro className="w-4 h-4 mr-1" /> Budget : {q.budget}
+                      </span>
+                    )}
+                    {q.timeline && (
+                      <span className="flex items-center">
+                        <CalendarDays className="w-4 h-4 mr-1" /> Délai : {q.timeline}
+                      </span>
+                    )}
+                    <span className="flex items-center">
+                      <Clock className="w-4 h-4 mr-1" /> {new Date(q.createdAt).toLocaleDateString('fr-FR')}
+                    </span>
+                  </div>
 
-              {q.response && (q.response.price > 0 || q.response.message || q.response.duration) && (
-                <div className="mt-4 bg-gray-50 rounded-xl p-4 border border-gray-100">
-                  <p className="text-sm font-semibold text-gray-700 mb-1">Réponse du cabinet</p>
-                  {q.response.price > 0 && <p className="text-sm text-gray-600">Prix proposé : {q.response.price} €</p>}
-                  {q.response.duration && <p className="text-sm text-gray-600">Durée : {q.response.duration}</p>}
-                  {q.response.message && <p className="text-sm text-gray-600 mt-1">{q.response.message}</p>}
-                </div>
-              )}
+                  {q.response && (q.response.price > 0 || q.response.message || q.response.duration) && (
+                    <div className="mt-4 bg-gray-50 rounded-xl p-4 border border-gray-100">
+                      <p className="text-sm font-semibold text-gray-700 mb-1">Réponse du cabinet</p>
+                      {q.response.price > 0 && <p className="text-sm text-gray-600">Prix proposé : {q.response.price} €</p>}
+                      {q.response.duration && <p className="text-sm text-gray-600">Durée : {q.response.duration}</p>}
+                      {q.response.message && <p className="text-sm text-gray-600 mt-1">{q.response.message}</p>}
+                    </div>
+                  )}
 
-              {q.status === 'pending' && (
-                <div className="mt-4 flex justify-end">
-                  <button
-                    onClick={() => handleCancel(q._id)}
-                    className="px-4 py-2 text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
-                  >
-                    Annuler la demande
-                  </button>
-                </div>
+                  <div className="mt-4 flex flex-wrap justify-end gap-3">
+                    <Link
+                      to={`/quotes/${q._id}`}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
+                    >
+                      <MessageSquare className="w-4 h-4 mr-1" /> Voir la demande
+                      {q.messages?.length > 0 && ` (${q.messages.length})`}
+                    </Link>
+
+                    {(q.status === 'accepted' || q.status === 'completed') && (
+                      <button
+                        onClick={() => (openReplyId === q._id ? setOpenReplyId(null) : (setOpenReplyId(q._id), setReply('')))}
+                        className="px-4 py-2 text-sm font-medium text-white bg-primary-500 rounded-lg hover:bg-primary-600 transition-colors flex items-center"
+                      >
+                        <MessageSquare className="w-4 h-4 mr-1" />
+                        {openReplyId === q._id ? 'Fermer' : 'Répondre'}
+                      </button>
+                    )}
+
+                    {q.status === 'pending' && (
+                      <>
+                        <button
+                          onClick={() => startEdit(q)}
+                          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
+                        >
+                          <Pencil className="w-4 h-4 mr-1" /> Modifier
+                        </button>
+                        <button
+                          onClick={() => handleCancel(q._id)}
+                          className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
+                        >
+                          <X className="w-4 h-4 mr-1" /> Annuler
+                        </button>
+                        <button
+                          onClick={() => handleDelete(q)}
+                          disabled={deletingId === q._id}
+                          className="px-4 py-2 text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors flex items-center disabled:opacity-70"
+                        >
+                          <Trash2 className="w-4 h-4 mr-1" />
+                          {deletingId === q._id ? 'Suppression...' : 'Supprimer'}
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  {openReplyId === q._id && (
+                    <form
+                      onSubmit={handleSendReply}
+                      className="mt-4 border-t border-gray-100 pt-4 space-y-3"
+                    >
+                      <textarea
+                        rows={3}
+                        className="input-field resize-none"
+                        placeholder="Répondre au cabinet..."
+                        value={reply}
+                        onChange={(e) => setReply(e.target.value)}
+                        maxLength={2000}
+                      />
+                      <div className="flex justify-end">
+                        <button
+                          type="submit"
+                          disabled={sending || !reply.trim()}
+                          className="px-6 py-2 text-sm font-medium text-white bg-primary-500 rounded-lg hover:bg-primary-600 disabled:opacity-70"
+                        >
+                          {sending ? 'Envoi...' : 'Envoyer le message'}
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </>
               )}
             </div>
           ))}
