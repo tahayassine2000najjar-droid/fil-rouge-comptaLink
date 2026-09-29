@@ -7,8 +7,96 @@ import { auth as authMiddleware, optionalAuth, requireRole } from '../middleware
 
 const router = Router();
 
+/**
+ * @openapi
+ * /api/auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     description: Create a new account for an entreprise or cabinet
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password, fullName, role]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 minLength: 8
+ *               fullName:
+ *                 type: string
+ *                 minLength: 2
+ *               role:
+ *                 type: string
+ *                 enum: [entreprise, cabinet]
+ *               companyName:
+ *                 type: string
+ *                 description: Required if role is entreprise
+ *               firmName:
+ *                 type: string
+ *                 description: Required if role is cabinet
+ *     responses:
+ *       201:
+ *         description: Account created successfully
+ *       409:
+ *         description: Email already exists
+ */
 router.post('/auth/register', auth.register);
+
+/**
+ * @openapi
+ * /api/auth/login:
+ *   post:
+ *     summary: Login to get access token
+ *     description: Authenticate and receive JWT access and refresh tokens
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *               password:
+ *                 type: string
+ *                 example: password123
+ *     responses:
+ *       200:
+ *         description: Login successful - returns tokens
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     _id: { type: string }
+ *                     email: { type: string }
+ *                     fullName: { type: string }
+ *                     role: { type: string, enum: [entreprise, cabinet] }
+ *                 accessToken:
+ *                   type: string
+ *                   description: JWT access token (expires in 15 minutes)
+ *                 refreshToken:
+ *                   type: string
+ *                   description: JWT refresh token (expires in 7 days)
+ *       401:
+ *         description: Invalid email or password
+ */
 router.post('/auth/login', auth.login);
+
 router.post('/auth/refresh', auth.refresh);
 router.post('/auth/logout', auth.logout);
 router.get('/auth/verify-email', auth.verifyEmail);
