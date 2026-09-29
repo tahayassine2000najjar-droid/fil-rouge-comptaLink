@@ -5,9 +5,5 @@ dist/
 .env
 .env.local
 
-# scratch endpoint probes
-backend/test_quote.js
-backend/test_quote_all.js
-
 # stray lockfile with no root package.json
 /package-lock.json
