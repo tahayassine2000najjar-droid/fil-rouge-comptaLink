@@ -144,7 +144,7 @@ export const authApi = {
 };
 
 export const cabinetApi = {
-  getAll: () => fetchWithAuth('/cabinets'),
+  getAll: (search) => fetchWithAuth(`/cabinets${search ? `?search=${encodeURIComponent(search)}` : ''}`),
   getById: (id) => fetchWithAuth(`/cabinets/${id}`),
   getMyCabinet: () => fetchWithAuth('/cabinet/me'),
   updateMyCabinet: (data) => fetchWithAuth('/cabinet/me', { method: 'PATCH', body: JSON.stringify(data) }),
