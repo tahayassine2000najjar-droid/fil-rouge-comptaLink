@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { cabinetApi } from '../../lib/api';
 import { Search, MapPin, Star, Building } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -7,11 +7,15 @@ export default function CabinetsList() {
   const [cabinets, setCabinets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const debounceRef = useRef(null);
 
   useEffect(() => {
     const fetchCabinets = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        const res = await cabinetApi.getAll();
+        const res = await cabinetApi.getAll(searchTerm || undefined);
         setCabinets(res.data || []);
       } catch (err) {
         setError(err.message);
@@ -19,8 +23,21 @@ export default function CabinetsList() {
         setLoading(false);
       }
     };
-    fetchCabinets();
-  }, []);
+
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    debounceRef.current = setTimeout(() => {
+      fetchCabinets();
+    }, 300);
+
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [searchTerm]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -36,6 +53,8 @@ export default function CabinetsList() {
           </div>
           <input
             type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="block w-full sm:w-64 pl-10 pr-3 py-2 border border-gray-200 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition-colors shadow-sm"
             placeholder="Rechercher un cabinet..."
           />
@@ -53,8 +72,12 @@ export default function CabinetsList() {
       ) : cabinets.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 shadow-sm">
           <Building className="mx-auto h-12 w-12 text-gray-300" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">Aucun cabinet</h3>
-          <p className="mt-1 text-sm text-gray-500">Aucun cabinet n'est inscrit pour le moment.</p>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">Aucun cabinet trouvé</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            {searchTerm
+              ? `Aucun cabinet ne correspond à "${searchTerm}".`
+              : "Aucun cabinet n'est inscrit pour le moment."}
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">

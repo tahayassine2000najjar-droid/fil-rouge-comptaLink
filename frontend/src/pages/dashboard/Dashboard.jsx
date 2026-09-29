@@ -5,7 +5,6 @@ import { Building2, FileText, Clock, CheckCircle2, XCircle, TrendingUp, Users, A
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
   const [quotes, setQuotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -18,7 +17,6 @@ export default function Dashboard() {
           quoteApi.getMyQuotes(),
         ]);
         setUser(meRes.user);
-        setProfile(meRes.profile);
         setQuotes(quotesRes.data || []);
       } catch (err) {
         setError(err.message);

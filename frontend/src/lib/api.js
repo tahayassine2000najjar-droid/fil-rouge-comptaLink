@@ -144,7 +144,7 @@ export const authApi = {
 };
 
 export const cabinetApi = {
-  getAll: () => fetchWithAuth('/cabinets'),
+  getAll: (search) => fetchWithAuth(`/cabinets${search ? `?search=${encodeURIComponent(search)}` : ''}`),
   getById: (id) => fetchWithAuth(`/cabinets/${id}`),
   getMyCabinet: () => fetchWithAuth('/cabinet/me'),
   updateMyCabinet: (data) => fetchWithAuth('/cabinet/me', { method: 'PATCH', body: JSON.stringify(data) }),
@@ -159,6 +159,10 @@ export const quoteApi = {
   createQuote: (data) => fetchWithAuth('/quotes', { method: 'POST', body: JSON.stringify(data) }),
   getMyQuotes: () => fetchWithAuth('/quotes'),
   getQuoteById: (id) => fetchWithAuth(`/quotes/${id}`),
+  updateQuote: (id, data) => fetchWithAuth(`/quotes/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteQuote: (id) => fetchWithAuth(`/quotes/${id}`, { method: 'DELETE' }),
   respondToQuote: (id, data) => fetchWithAuth(`/quotes/${id}/respond`, { method: 'POST', body: JSON.stringify(data) }),
+  sendMessage: (id, body) => fetchWithAuth(`/quotes/${id}/messages`, { method: 'POST', body: JSON.stringify({ body }) }),
+  acceptTerms: (id) => fetchWithAuth(`/quotes/${id}/accept-terms`, { method: 'POST' }),
   cancelQuote: (id) => fetchWithAuth(`/quotes/${id}/cancel`, { method: 'POST' }),
 };

@@ -1,5 +1,31 @@
 import mongoose from 'mongoose';
 
+const messageSchema = new mongoose.Schema(
+  {
+    author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    authorRole: { type: String, enum: ['entreprise', 'cabinet'], required: true },
+    body: { type: String, required: true, trim: true, maxlength: 2000 },
+  },
+  { timestamps: { createdAt: true, updatedAt: false } }
+);
+
+const sideSchema = new mongoose.Schema(
+  {
+    accepted: { type: Boolean, default: false },
+    acceptedAt: { type: Date, default: null },
+  },
+  { _id: false }
+);
+
+const termsSchema = new mongoose.Schema(
+  {
+    entreprise: { type: sideSchema, default: () => ({}) },
+    cabinet: { type: sideSchema, default: () => ({}) },
+    bothAcceptedAt: { type: Date, default: null },
+  },
+  { _id: false }
+);
+
 const quoteRequestSchema = new mongoose.Schema(
   {
     entreprise: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
@@ -20,6 +46,8 @@ const quoteRequestSchema = new mongoose.Schema(
       message: { type: String, default: '' },
       respondedAt: { type: Date, default: null },
     },
+    messages: { type: [messageSchema], default: [] },
+    terms: { type: termsSchema, default: () => ({}) },
   },
   { timestamps: true }
 );

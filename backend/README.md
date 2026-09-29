@@ -1,3 +1,9 @@
+
+# diagram use-case : ![alt text](image.png)
+# diagram class : ![alt text](image-1.png)
+# diagram sequence / login: ![alt text](image-2.png) 
+
+
 # ComptaLink Backend API
 
 Backend API for the ComptaLink project, an application built to serve as a comprehensive link between accounting firms (cabinets) and enterprises. Built with Node.js, Express, and MongoDB.
